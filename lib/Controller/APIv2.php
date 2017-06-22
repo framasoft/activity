@@ -29,6 +29,8 @@ use OCA\Activity\Exception\InvalidFilterException;
 use OCA\Activity\GroupHelper;
 use OCA\Activity\UserSettings;
 use OCA\Activity\ViewInfoCache;
+use OCP\Activity\IFilter;
+use OCP\Activity\IManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
@@ -66,6 +68,8 @@ class APIv2 extends OCSController {
 	/** @var bool */
 	protected $loadPreviews;
 
+	/** @var IManager */
+	protected $activityManager;
 
 	/** @var Data */
 	protected $data;
@@ -99,6 +103,7 @@ class APIv2 extends OCSController {
 	 *
 	 * @param string $appName
 	 * @param IRequest $request
+	 * @param IManager $activityManager
 	 * @param Data $data
 	 * @param GroupHelper $helper
 	 * @param UserSettings $settings
@@ -111,6 +116,7 @@ class APIv2 extends OCSController {
 	 */
 	public function __construct($appName,
 								IRequest $request,
+								IManager $activityManager,
 								Data $data,
 								GroupHelper $helper,
 								UserSettings $settings,
@@ -121,6 +127,7 @@ class APIv2 extends OCSController {
 								View $view,
 								ViewInfoCache $infoCache) {
 		parent::__construct($appName, $request);
+		$this->activityManager = $activityManager;
 		$this->data = $data;
 		$this->helper = $helper;
 		$this->settings = $settings;
@@ -199,6 +206,33 @@ class APIv2 extends OCSController {
 	 */
 	public function getFilter($filter, $since = 0, $limit = 50, $previews = false, $object_type = '', $object_id = 0, $sort = 'desc') {
 		return $this->get($filter, $since, $limit, $previews, $object_type, $object_id, $sort);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
+	 */
+	public function listFilters() {
+		$filters = $this->activityManager->getFilters();
+
+		usort($filters, function(IFilter $a, IFilter $b) {
+			if ($a->getPriority() === $b->getPriority()) {
+				return $a->getIdentifier() > $b->getIdentifier();
+			}
+
+			return $a->getPriority() > $b->getPriority();
+		});
+
+		$filters = array_map(function(IFilter $filter) {
+			return [
+				'id' => $filter->getIdentifier(),
+				'name' => $filter->getName(),
+				'icon' => $filter->getIcon(),
+			];
+		}, $filters);
+
+		return new DataResponse($filters);
 	}
 
 	/**
