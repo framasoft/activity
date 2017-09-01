@@ -24,7 +24,6 @@
 
 namespace OCA\Activity;
 
-use OC\Files\Config\UserMountCache;
 use OC\Files\Filesystem;
 use OC\Files\View;
 use OCA\Activity\BackgroundJob\RemoteActivity;
@@ -97,7 +96,7 @@ class FilesHooks {
 	protected $oldParentOwner;
 	/** @var string */
 	protected $oldParentId;
-	/** @var UserMountCache */
+	/** @var IUserMountCache */
 	protected $userMountCache;
 
 	/**
@@ -114,6 +113,7 @@ class FilesHooks {
 	 * @param IURLGenerator $urlGenerator
 	 * @param ILogger $logger
 	 * @param CurrentUser $currentUser
+	 * @param IUserMountCache $userMountCache
 	 */
 	public function __construct(IManager $manager,
 								Data $activityData,
