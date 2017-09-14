@@ -189,8 +189,12 @@ class Data {
 		$query->select('*')
 			->from('activity');
 
+		$orWhereType = [];
+		foreach ($enabledNotifications as $type) {
+			$orWhereType[] = $query->expr()->eq('type', $query->createNamedParameter($type, IQueryBuilder::PARAM_STR));
+		}
 		$query->where($query->expr()->eq('affecteduser', $query->createNamedParameter($user)))
-			->andWhere($query->expr()->in('type', $query->createNamedParameter($enabledNotifications, IQueryBuilder::PARAM_STR_ARRAY)));
+			->andWhere(call_user_func_array($query->expr()->orX, $orWhereType));
 		if ($filter === 'self') {
 			$query->andWhere($query->expr()->eq('user', $query->createNamedParameter($user)));
 
